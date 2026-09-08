@@ -60,6 +60,14 @@ agent/.venv/bin/python -m uvicorn agent.web.server:app --port 8300
 
 三个 MCP 是标准 stdio 服务，可直接配到任意 MCP 客户端（Cherry Studio / Claude Desktop / Cursor 等）操作你构建的双库：
 
+| MCP | 工具 | 说明 |
+|---|---|---|
+| **graph-read** | `get_schema` / `read_cypher` / `neighbors` / `chunk_entities` | 图谱只读：本体、写语句拦截的自由查询、多跳邻域、块级反查 |
+| **rag** | `search` / `read_chunk` | 向量召回 + payload 过滤（kind/年份区间/卷）、相邻块扩展 |
+| **graph-write** | `record_visit` / `vote` / `revise_description` / `set_interval` / `add_relation` / `fix_relation` | 白名单写回：参数化 Cypher + 14 关系类型白名单，防 LLM 裸拼语句（校验智能体专用） |
+
+契约细节见 [docs/mcp-design.md](docs/mcp-design.md)。
+
 ```json
 {
   "mcpServers": {
