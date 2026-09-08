@@ -10,6 +10,7 @@
 ```bash
 mkdir -p corpus && cp examples/corpus/star-isles.md corpus/
 export MINIMAX_API_KEY=... NEO4J_PASSWORD=... DASHSCOPE_API_KEY=...
+export LOREBASE_SKIP_TITLES=星屿纪年   # 跳过书名标题(否则会被当成一章)
 python3 scripts/01_chunking.py          # 切片
 python3 scripts/02_entity_dict.py       # 实体抽取(M3)
 python3 scripts/02b_merge_dict.py       # 词典归并

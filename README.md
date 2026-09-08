@@ -31,6 +31,7 @@
 # 1) 管线：examples/ 自带 1600 字自造语料，可零成本跑通全链路
 cp .env.example .env && vi .env  # 填密钥, source .env
 mkdir -p corpus && cp examples/corpus/star-isles.md corpus/
+export LOREBASE_SKIP_TITLES=星屿纪年  # 书名标题跳过(按你的语料改)
 python3 scripts/01_chunking.py
 python3 scripts/02_entity_dict.py && python3 scripts/02b_merge_dict.py
 python3 scripts/03_extract_graph.py extract && python3 scripts/03_extract_graph.py load
