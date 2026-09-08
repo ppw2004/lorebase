@@ -56,6 +56,31 @@ agent/.venv/bin/python -m uvicorn agent.web.server:app --port 8300
 
 详细设计见 [docs/](docs/)（架构 / 图谱 schema / MCP 契约 / 智能体设计 / ADR）。
 
+## 独立接入 MCP（不经智能体）
+
+三个 MCP 是标准 stdio 服务，可直接配到任意 MCP 客户端（Cherry Studio / Claude Desktop / Cursor 等）操作你构建的双库：
+
+```json
+{
+  "mcpServers": {
+    "lorebase-graph-read": {
+      "command": "agent/.venv-mcp/bin/python",
+      "args": ["agent/mcps/graph_read/server.py"],
+      "cwd": "/path/to/lorebase",
+      "env": { "NEO4J_HTTP": "http://localhost:7474", "NEO4J_PASSWORD": "..." }
+    },
+    "lorebase-rag": {
+      "command": "agent/.venv-mcp/bin/python",
+      "args": ["agent/mcps/rag/server.py"],
+      "cwd": "/path/to/lorebase",
+      "env": { "QDRANT_URL": "http://localhost:6333", "QDRANT_COLLECTION": "lorebase_chunks", "DASHSCOPE_API_KEY": "..." }
+    }
+  }
+}
+```
+
+graph-write（校验智能体专用，白名单写回）按需同法配置。全部环境变量见 `.env.example`。
+
 ## 语料与合规
 
 - 本仓**不随附任何真实作品语料**；examples/ 为自造示例，全部专有名词均为虚构
