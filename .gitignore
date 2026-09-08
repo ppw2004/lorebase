@@ -1,0 +1,17 @@
+# 密钥与本地凭据
+*.env
+!.env.example
+
+# 构建产物（chunks/词典/图谱抽取结果/校验结果/用量账本）; /corpus 仅根目录语料, examples/corpus 照常入库
+build/
+/corpus/
+agent/domain-knowledge.md
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv-mcp/
+
+# Node（渲染/前端如引入）
+node_modules/

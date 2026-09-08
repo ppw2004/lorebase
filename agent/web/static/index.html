@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lorebase 世界观问答</title>
+<style>
+  :root { --bg:#111418; --panel:#1a1f26; --line:#2a323c; --fg:#dde3ea; --dim:#8a97a5;
+          --accent:#4f9cf9; --user:#2b3d55; --tool:#232a34; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:14.5px/1.55 "PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+  .wrap { max-width:860px; margin:0 auto; padding:16px; }
+  header { display:flex; align-items:center; gap:10px; padding:10px 0; }
+  header h1 { font-size:18px; margin:0; flex:1; }
+  header .sub { color:var(--dim); font-size:12px; }
+  button { background:var(--panel); color:var(--fg); border:1px solid var(--line);
+           border-radius:8px; padding:6px 14px; cursor:pointer; font-size:13px; }
+  button:hover { border-color:var(--accent); }
+  #chat { display:flex; flex-direction:column; gap:14px; padding:12px 0 140px; }
+  .msg { max-width:86%; padding:10px 14px; border-radius:12px; white-space:pre-wrap;
+         word-break:break-word; }
+  .msg.user { align-self:flex-end; background:var(--user); }
+  .turn { display:flex; flex-direction:column; gap:8px; }
+  details.think { background:var(--panel); border:1px solid var(--line); border-radius:8px;
+                  padding:6px 10px; font-size:13px; color:var(--dim); }
+  details.think summary { cursor:pointer; user-select:none; }
+  details.think .body { white-space:pre-wrap; max-height:260px; overflow:auto;
+                        margin-top:6px; border-top:1px dashed var(--line); padding-top:6px; }
+  .toolcard { background:var(--tool); border:1px solid var(--line); border-radius:8px;
+              font-size:13px; overflow:hidden; }
+  .toolcard .hd { display:flex; gap:8px; padding:6px 10px; cursor:pointer;
+                  align-items:center; }
+  .toolcard .name { color:var(--accent); font-weight:600; }
+  .toolcard .st { color:var(--dim); font-size:12px; }
+  .toolcard pre { margin:0; padding:8px 10px; border-top:1px solid var(--line);
+                  max-height:240px; overflow:auto; color:#b9c4d0; font-size:12px;
+                  white-space:pre-wrap; }
+  .chip { align-self:flex-start; color:var(--dim); font-size:12px;
+          border:1px dashed var(--line); border-radius:6px; padding:2px 8px; }
+  .msg.assistant { background:var(--panel); align-self:flex-start; min-width:40px; }
+  .msg.assistant:empty { display:none; }
+  /* markdown 渲染(聊天向紧凑密度: 行高1.55/段距0.3em, 对齐主流 chat UI) */
+  .msg.assistant { line-height:1.55; }
+  .msg.assistant h1,.msg.assistant h2,.msg.assistant h3,.msg.assistant h4 { margin:10px 0 4px; line-height:1.35; }
+  .msg.assistant h1 { font-size:16px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .msg.assistant h2 { font-size:15px; }
+  .msg.assistant h3 { font-size:14.5px; }
+  .msg.assistant h4 { font-size:13.5px; color:var(--dim); }
+  .msg.assistant h1:first-child,.msg.assistant h2:first-child,.msg.assistant h3:first-child { margin-top:0; }
+  .msg.assistant p { margin:4px 0; }
+  .msg.assistant ul,.msg.assistant ol { margin:4px 0; padding-left:20px; }
+  .msg.assistant li { margin:1px 0; }
+  .msg.assistant blockquote { margin:6px 0; padding:3px 10px; border-left:3px solid var(--accent);
+                              color:var(--dim); background:#20262e; border-radius:0 6px 6px 0; }
+  .msg.assistant blockquote p { margin:2px 0; }
+  .msg.assistant pre { background:#20262e; border:1px solid var(--line); border-radius:8px;
+                       padding:8px 10px; overflow:auto; margin:6px 0; }
+  .msg.assistant pre code { background:none; padding:0; }
+  .msg.assistant code { background:#222a34; border-radius:4px; padding:0 4px; }
+  .msg.assistant table { border-collapse:collapse; margin:8px 0; font-size:13.5px; display:block;
+                         overflow-x:auto; max-width:100%; }
+  .msg.assistant th,.msg.assistant td { border:1px solid var(--line); padding:4px 8px; text-align:left; }
+  .msg.assistant th { background:#20262e; }
+  .msg.assistant hr { border:none; border-top:1px solid var(--line); margin:8px 0; }
+  .msg.assistant a { color:var(--accent); }
+  .status { color:var(--dim); font-size:12px; align-self:flex-start; }
+  .status.err { color:#f08c8c; }
+  footer { position:fixed; bottom:0; left:0; right:0; background:var(--bg);
+           border-top:1px solid var(--line); }
+  footer .inner { max-width:860px; margin:0 auto; padding:12px 16px; display:flex; gap:10px; }
+  textarea { flex:1; background:var(--panel); color:var(--fg); border:1px solid var(--line);
+             border-radius:10px; padding:10px 12px; font:inherit; resize:none; }
+  textarea:focus { outline:none; border-color:var(--accent); }
+  #send { background:var(--accent); border-color:var(--accent); color:#fff; width:86px; }
+  #send:disabled { opacity:.45; cursor:default; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lorebase 世界观问答 <span class="sub">AG-UI 流式 · 检索+图谱</span></h1>
+    <button id="new">新会话</button>
+  </header>
+  <div id="chat"></div>
+</div>
+<footer><div class="inner">
+  <textarea id="q" rows="2" placeholder="问点世界观的事，例如：两位主角是什么关系？"></textarea>
+  <button id="send">发送</button>
+</div></footer>
+<script src="/marked.min.js"></script>
+<script src="/purify.min.js"></script>
+<script>
+const chatEl = document.getElementById('chat');
+// http 直连(tailnet IP)非安全上下文没有 crypto.randomUUID, 兜底
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+let sessionId = uuid();
+let busy = false, ctrl = null;
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+marked.setOptions({ breaks: true, gfm: true });
+// 全量 markdown 渲染(marked) + 消毒(DOMPurify); 流式期间每次增量重渲染
+const md = s => DOMPurify.sanitize(marked.parse(s || ''));
+
+// 时间线式布局: 所有元素按事件到达顺序插到 status 之前, 保持 AG-UI 时序
+// (思考 → 过渡语 → 工具卡 → 再思考 → … → 最终回答)
+function newTurn() {
+  const t = document.createElement('div'); t.className = 'turn';
+  const status = document.createElement('div'); status.className = 'status';
+  t.append(status); chatEl.append(t);
+  return { turn: t, status };
+}
+
+const addEl = (ui, el) => ui.turn.insertBefore(el, ui.status) && el;
+const newChip = (ui, txt) => {
+  const c = document.createElement('div'); c.className = 'chip'; c.textContent = txt;
+  return addEl(ui, c);
+};
+const newThinkBox = (ui, open) => {
+  const d = document.createElement('details'); d.className = 'think';
+  d.innerHTML = '<summary>💭 思考过程</summary><div class="body"></div>';
+  if (open) d.setAttribute('open', '');
+  return addEl(ui, d);
+};
+const newTextEl = (ui) => {
+  const el = document.createElement('div'); el.className = 'msg assistant';
+  return addEl(ui, el);
+};
+
+function toolCard(ui, name) {
+  const c = document.createElement('div'); c.className = 'toolcard';
+  const hd = document.createElement('div'); hd.className = 'hd';
+  hd.innerHTML = `<span class="name">🔧 ${esc(name)}</span><span class="st">运行中…</span>`;
+  const pre = document.createElement('pre'); pre.style.display = 'none';
+  c.append(hd, pre); addEl(ui, c);
+  hd.onclick = () => pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
+  return { c, st: hd.querySelector('.st'), pre, shown:false };
+}
+
+// —— AG-UI 事件渲染 ——
+function render(ev, ctx) {
+  const t = ev.type;
+  if (t === 'RUN_STARTED') { ctx.ui = newTurn(); ctx.tools = {}; ctx.texts = {}; }
+  const ui = ctx.ui; if (!ui) return;
+  if (t === 'STEP_STARTED') {
+    newChip(ui, '⚡ 模型调用 ' + (ev.stepName || ''));
+  } else if (t === 'TEXT_MESSAGE_START') {
+    ctx.texts[ev.messageId] = { buf:'', think:false, text:'', el:null, thinkEl:null };
+  } else if (t === 'TEXT_MESSAGE_CONTENT') {
+    const m = ctx.texts[ev.messageId] || (ctx.texts[ev.messageId] = {buf:'',think:false,text:''});
+    routeThink(m, ev.delta, ui, false);
+  } else if (t === 'TEXT_MESSAGE_END') {
+    const m = ctx.texts[ev.messageId];
+    if (m) routeThink(m, '', ui, true);  // 冲刷尾部缓冲
+  } else if (t === 'TOOL_CALL_START') {
+    ctx.tools[ev.toolCallId] = toolCard(ui, ev.toolCallName);
+  } else if (t === 'TOOL_CALL_ARGS') {
+    const tc = ctx.tools[ev.toolCallId]; if (!tc) return;
+    tc.st.textContent = '参数…';
+    if (!tc.shown) { tc.pre.style.display='block'; tc.shown = true;
+                     tc.st.textContent = '参数'; }
+    tc.pre.textContent += ev.delta || '';
+  } else if (t === 'TOOL_CALL_END') {
+    const tc = ctx.tools[ev.toolCallId]; if (!tc) return;
+    try { const j = JSON.parse(tc.pre.textContent);
+          tc.pre.textContent = JSON.stringify(j, null, 2); } catch {}
+    tc.st.textContent = '执行中…';
+  } else if (t === 'TOOL_CALL_RESULT') {
+    const tc = ctx.tools[ev.toolCallId]; if (!tc) return;
+    tc.st.textContent = '完成 ✓';
+    let out = '';
+    try { const j = JSON.parse(ev.content);
+          out = JSON.stringify(j, null, 2); } catch { out = String(ev.content || ''); }
+    tc.pre.textContent = (tc.pre.textContent ? tc.pre.textContent + '\n— 结果 —\n' : '') + out;
+    if (!tc.shown) { tc.pre.style.display = 'block'; tc.shown = true; }
+  } else if (t === 'RUN_FINISHED') {
+    ui.status.textContent = '完成';
+    setTimeout(()=>ui.status.remove(), 2500);
+  } else if (t === 'RUN_ERROR') {
+    ui.status.textContent = '✗ ' + (ev.message || 'error');
+    ui.status.classList.add('err');
+  }
+}
+
+// MiniMax <think> 内联: 按标签边界分流; 正文/思考各自在时间线当前位置开新元素,
+// 尾部缓冲防标签跨 delta 分裂; m.el/m.thinkEl 延迟创建保证"到什么渲染什么"
+function routeThink(m, delta, ui, flush) {
+  m.buf = (m.buf || '') + (delta || '');
+  let s = m.buf;
+  const outText = (chunk) => {
+    m.text += chunk;
+    if (!m.el) m.el = newTextEl(ui);
+    m.el.innerHTML = md(m.text);
+  };
+  const outThink = (chunk) => {
+    if (!m.thinkEl) m.thinkEl = newThinkBox(ui, m.text === '' ? true : false);
+    m.thinkEl.querySelector('.body').textContent += chunk;
+  };
+  while (s) {
+    if (m.think) {
+      const end = s.indexOf('</think>');
+      if (end < 0) {
+        const emit = flush ? s : s.slice(0, Math.max(0, s.length - 8));
+        if (emit) outThink(emit);
+        m.buf = flush ? '' : s.slice(Math.max(0, s.length - 8));
+        break;
+      }
+      outThink(s.slice(0, end));
+      s = m.buf = s.slice(end + 8); m.think = false;
+    } else {
+      const start = s.indexOf('<think>');
+      if (start < 0) {
+        const keep = flush ? s.length : Math.max(0, s.length - 7);
+        if (keep) outText(s.slice(0, keep));
+        m.buf = s.slice(keep);
+        break;
+      }
+      if (start > 0) outText(s.slice(0, start));
+      s = m.buf = s.slice(start + 7);
+      m.think = true;
+      m.el = null;  // 思考后的正文开新元素, 落在思考框之后的时序位置
+    }
+  }
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+async function send() {
+  const ta = document.getElementById('q');
+  const q = ta.value.trim(); if (!q || busy) return;
+  busy = true; document.getElementById('send').disabled = true; ta.value = '';
+  const u = document.createElement('div'); u.className = 'msg user';
+  u.textContent = q; chatEl.append(u); chatEl.scrollTop = chatEl.scrollHeight;
+  ctrl = new AbortController();
+  const ctx = {};
+  try {
+    const r = await fetch('/api/chat', { method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id:sessionId, question:q}),
+      signal: ctrl.signal });
+    if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + (await r.text()).slice(0, 200));
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let sse = '';
+    while (true) {
+      const {done, value} = await reader.read(); if (done) break;
+      sse += dec.decode(value, {stream:true});
+      let i;
+      while ((i = sse.indexOf('\n\n')) >= 0) {
+        const frame = sse.slice(0, i); sse = sse.slice(i + 2);
+        for (const line of frame.split('\n'))
+          if (line.startsWith('data: '))
+            try { render(JSON.parse(line.slice(6)), ctx); } catch {}
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      const d = document.createElement('div'); d.className = 'status err';
+      d.textContent = '✗ ' + e.message; chatEl.append(d);
+    }
+  } finally {
+    busy = false; ctrl = null;
+    document.getElementById('send').disabled = false;
+  }
+}
+
+document.getElementById('send').onclick = send;
+document.getElementById('q').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+document.getElementById('new').onclick = () => {
+  if (ctrl) ctrl.abort();
+  chatEl.innerHTML = ''; sessionId = uuid();
+};
+</script>
+</body>
+</html>

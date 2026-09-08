@@ -1,0 +1,12 @@
+# 金查询示例（对应 examples/corpus/star-isles.md 自造语料）
+# 用法: 复制到 build/golden_queries.tsv 后运行 `python3 scripts/03_extract_graph.py verify`
+# 每行格式: 描述<TAB>Cypher（# 开头为注释）
+澜的一跳关系网	MATCH (a {name:'澜'})-[r]-(b) RETURN type(r) AS rel, b.name AS other LIMIT 15
+纪元前事件(时间线抽取验证)	MATCH (e:Event) WHERE e.year IS NOT NULL AND e.year < 0 RETURN e.name AS event, e.year AS year ORDER BY year LIMIT 15
+潮汐族成员	MATCH (c)-[:MEMBER_OF]->(x) WHERE x.name CONTAINS '潮汐' RETURN c.name AS member LIMIT 15
+潮汐罗盘持有者	MATCH (c)-[:OWNS]->(x {name:'潮汐罗盘'}) RETURN c.name AS owner
+守灯人公会的敌人	MATCH (c)-[:ENEMY_OF]-(x) WHERE x.name CONTAINS '深渊' RETURN c.name AS enemy LIMIT 10
+叛出者(TEACHER_OF 反查)	MATCH (a {name:'乌桑'})-[r:TEACHER_OF]-(b) RETURN type(r), b.name AS other LIMIT 8
+掌握潮汐术者(MASTERS)	MATCH (c)-[:MASTERS]->(m) RETURN c.name AS who, m.name AS skill LIMIT 12
+风暴眼关联实体	MATCH (c)-[r]-(q) WHERE q.name CONTAINS '风暴眼' RETURN type(r) AS rel, c.name AS other LIMIT 10
+405年前后事件	MATCH (e:Event) WHERE e.year IS NOT NULL AND 400 <= e.year AND e.year <= 410 RETURN e.name AS event, e.year AS year
